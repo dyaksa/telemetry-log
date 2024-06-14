@@ -96,8 +96,7 @@ log.Fatal("Bye.")
 log.Panic("I'm bailing.")
 ```
 
-You can set the logging level on a `Logger`, then it will only log entries with
-that severity or anything above it:
+#### Environments
 
 
 
