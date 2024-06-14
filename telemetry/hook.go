@@ -29,7 +29,7 @@ func (m *MongoHook) Fire(e *logrus.Entry) error {
 		}
 		break
 	default:
-
+		return nil
 	}
 	return nil
 }
