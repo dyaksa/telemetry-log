@@ -1,3 +1,4 @@
+// Package telemetry provides functionality for telemetry logging.
 package telemetry
 
 import (
@@ -9,12 +10,16 @@ import (
 	"time"
 )
 
+// MongoHook is a struct that holds the necessary information for a MongoDB hook.
 type MongoHook struct {
-	Client   *mongo.Mongo
-	Timeout  time.Duration
-	WithHook bool
+	Client   *mongo.Mongo  // Client is a pointer to a Mongo instance.
+	Timeout  time.Duration // Timeout is the duration before the hook times out.
+	WithHook bool          // WithHook is a boolean that determines whether the hook is active.
 }
 
+// Fire is a method that logs an entry to a MongoDB collection.
+// If the entry level is "error" and the hook is active, it logs the entry to the "application_trace" collection.
+// Otherwise, it logs a sample entry to the "application_log" collection.
 func (m *MongoHook) Fire(e *logrus.Entry) error {
 	switch {
 	case e.Level.String() == logrus.ErrorLevel.String() && m.WithHook:
@@ -41,6 +46,7 @@ func (m *MongoHook) Fire(e *logrus.Entry) error {
 	return nil
 }
 
+// Levels is a method that returns all logrus levels.
 func (m *MongoHook) Levels() []logrus.Level {
 	return logrus.AllLevels
 }
