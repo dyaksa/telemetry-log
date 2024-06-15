@@ -1,3 +1,4 @@
+// Package cmd provides functionality for command line operations.
 package cmd
 
 import (
@@ -13,10 +14,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// OptFunc is a type that defines a function that modifies a CMD instance.
 type OptFunc func(cmd *CMD) error
 
+// Level is a type that defines the logging level.
 type Level int
 
+// These constants represent the different logging levels.
 const (
 	LevelDebug Level = iota
 	LevelInfo
@@ -25,6 +29,7 @@ const (
 	LevelFatal
 )
 
+// WithLogLevel is a function that returns an OptFunc which sets the logging level of a CMD instance.
 func WithLogLevel(s string) OptFunc {
 	var l Level = -1
 	switch strings.ToLower(s) {
@@ -42,6 +47,7 @@ func WithLogLevel(s string) OptFunc {
 	return WithLevel(l)
 }
 
+// WithLevel is a function that returns an OptFunc which sets the logging level of a CMD instance.
 func WithLevel(l Level) OptFunc {
 	return func(z *CMD) (err error) {
 		if l < LevelDebug || l > LevelFatal {
@@ -53,6 +59,7 @@ func WithLevel(l Level) OptFunc {
 	}
 }
 
+// JSONFormatter is a function that returns an OptFunc which sets the JSON formatter for a CMD instance.
 func JSONFormatter() OptFunc {
 	return func(z *CMD) (err error) {
 		z.lg.SetFormatter(&logrus.JSONFormatter{})
@@ -60,6 +67,7 @@ func JSONFormatter() OptFunc {
 	}
 }
 
+// WithHook is a function that returns an OptFunc which sets the hook for a CMD instance.
 func WithHook(hook logrus.Hook) OptFunc {
 	return func(z *CMD) (err error) {
 		z.lg.AddHook(hook)
@@ -67,6 +75,7 @@ func WithHook(hook logrus.Hook) OptFunc {
 	}
 }
 
+// CMD is a struct that holds the necessary information for command line operations.
 type CMD struct {
 	lg       *logrus.Logger
 	lvl      Level
@@ -74,6 +83,8 @@ type CMD struct {
 	errTrace *err.ErrorTracer
 }
 
+// New is a function that creates a new CMD instance.
+// It applies the provided options to the CMD instance.
 func New(opts ...OptFunc) (l log.Logger, err error) {
 	logr := logrus.New()
 	lg := &CMD{
@@ -91,6 +102,7 @@ func New(opts ...OptFunc) (l log.Logger, err error) {
 	return
 }
 
+// logWithFields is a method that logs an entry with the specified context.
 func (l *CMD) logWithFields(fn ...log.LogContextFunc) (entry *logrus.Entry) {
 	ctx := newLoggerContext(append(l.ctxFunc, fn...)...)
 	mergedFields := mergeFields(ctx.fields)
@@ -98,6 +110,7 @@ func (l *CMD) logWithFields(fn ...log.LogContextFunc) (entry *logrus.Entry) {
 	return
 }
 
+// mergeFields is a function that merges multiple sets of logrus fields into one.
 func mergeFields(fields []logrus.Fields) logrus.Fields {
 	merged := logrus.Fields{}
 	for _, fieldSet := range fields {
@@ -108,6 +121,7 @@ func mergeFields(fields []logrus.Fields) logrus.Fields {
 	return merged
 }
 
+// addTraceInfo is a function that returns a LogContextFunc which adds trace information to the context.
 func addTraceInfo() log.LogContextFunc {
 	return func(ctx log.LogContext) {
 		if pc, file, line, ok := runtime.Caller(4); ok {
@@ -119,6 +133,7 @@ func addTraceInfo() log.LogContextFunc {
 	}
 }
 
+// Debug is a method that logs a debug message.
 func (l CMD) Debug(message string, fn ...log.LogContextFunc) {
 	if l.lvl > LevelDebug {
 		return
@@ -129,6 +144,7 @@ func (l CMD) Debug(message string, fn ...log.LogContextFunc) {
 	l.logWithFields(fn...).Debug(message)
 }
 
+// Info is a method that logs an informational message.
 func (l CMD) Info(message string, fn ...log.LogContextFunc) {
 	if l.lvl > LevelInfo {
 		return
@@ -139,6 +155,7 @@ func (l CMD) Info(message string, fn ...log.LogContextFunc) {
 	l.logWithFields(fn...).Info(message)
 }
 
+// Warn is a method that logs a warning message.
 func (l CMD) Warn(message string, fn ...log.LogContextFunc) {
 	if l.lvl > LevelWarn {
 		return
@@ -149,6 +166,7 @@ func (l CMD) Warn(message string, fn ...log.LogContextFunc) {
 	l.logWithFields(fn...).Warn(message)
 }
 
+// Error is a method that logs an error message.
 func (l CMD) Error(message string, fn ...log.LogContextFunc) {
 	if l.lvl > LevelError {
 		return
@@ -159,6 +177,7 @@ func (l CMD) Error(message string, fn ...log.LogContextFunc) {
 	l.logWithFields(fn...).Error(message)
 }
 
+// Fatal is a method that logs a fatal error message.
 func (l CMD) Fatal(message string, fn ...log.LogContextFunc) {
 	if l.lvl > LevelFatal {
 		return
@@ -169,12 +188,14 @@ func (l CMD) Fatal(message string, fn ...log.LogContextFunc) {
 	l.logWithFields(fn...).Fatal(message)
 }
 
+// WithCtx is a method that returns a new Logger with the specified context.
 func (l CMD) WithCtx(fn log.LogContextFunc) log.Logger {
 	newLogger := l
 	newLogger.ctxFunc = append(newLogger.ctxFunc, fn)
 	return &newLogger
 }
 
+// WithTrace is a method that returns a new Logger with the specified error trace.
 func (l CMD) WithTrace(err error) log.Logger {
 	newLogger := l
 	if err != nil {
@@ -185,10 +206,12 @@ func (l CMD) WithTrace(err error) log.Logger {
 	return &newLogger
 }
 
+// loggerContext is a struct that holds the necessary information for a logger context.
 type loggerContext struct {
 	fields []logrus.Fields
 }
 
+// newLoggerContext is a function that creates a new logger context with the specified context functions.
 func newLoggerContext(fn ...log.LogContextFunc) *loggerContext {
 	lc := &loggerContext{fields: make([]logrus.Fields, 0, len(fn))}
 	for _, fn := range fn {
@@ -197,38 +220,47 @@ func newLoggerContext(fn ...log.LogContextFunc) *loggerContext {
 	return lc
 }
 
+// Any is a method that sets a context value of any type.
 func (lc *loggerContext) Any(key string, value any) {
 	lc.fields = append(lc.fields, logrus.Fields{key: value})
 }
 
+// Bool is a method that sets a context value of type bool.
 func (lc *loggerContext) Bool(key string, value bool) {
 	lc.fields = append(lc.fields, logrus.Fields{key: value})
 }
 
+// ByteString is a method that sets a context value of type []byte.
 func (lc *loggerContext) ByteString(key string, value []byte) {
 	lc.fields = append(lc.fields, logrus.Fields{key: value})
 }
 
+// String is a method that sets a context value of type string.
 func (lc *loggerContext) String(key string, value string) {
 	lc.fields = append(lc.fields, logrus.Fields{key: value})
 }
 
+// Float64 is a method that sets a context value of type float64.
 func (lc *loggerContext) Float64(key string, value float64) {
 	lc.fields = append(lc.fields, logrus.Fields{key: value})
 }
 
+// Int64 is a method that sets a context value of type int64.
 func (lc *loggerContext) Int64(key string, value int64) {
 	lc.fields = append(lc.fields, logrus.Fields{key: value})
 }
 
+// Uint64 is a method that sets a context value of type uint64.
 func (lc *loggerContext) Uint64(key string, value uint64) {
 	lc.fields = append(lc.fields, logrus.Fields{key: value})
 }
 
+// Time is a method that sets a context value of type time.Time.
 func (lc *loggerContext) Time(key string, value time.Time) {
 	lc.fields = append(lc.fields, logrus.Fields{key: value})
 }
 
+// Error is a method that sets a context value of type error.
 func (lc *loggerContext) Error(key string, value error) {
 	lc.fields = append(lc.fields, logrus.Fields{key: value})
 }
