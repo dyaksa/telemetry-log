@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"fmt"
+	"github.com/dyaksa/telemetry-log/cmd"
 	"github.com/dyaksa/telemetry-log/telemetry/log"
 	"github.com/dyaksa/telemetry-log/telemetry/mongo"
 	"time"
@@ -12,20 +13,20 @@ type OptFunc func(*Lib) error
 type Lib struct {
 	Level string `env:"TELEMETRY_LOG_LEVEL" envDefault:"debug" json:"level"`
 
-	Host     string `env:"TELEMETRY_HOST" json:"host"`
-	Port     string `env:"TELEMETRY_PORT" json:"port"`
-	Username string `env:"TELEMETRY_USERNAME" json:"username"`
-	Password string `env:"TELEMETRY_PASSWORD" json:"password"`
+	Host     string `env:"TELEMETRY_HOST" envDefault:"127.0.0.1" json:"host"`
+	Port     string `env:"TELEMETRY_PORT" envDefault:"27017" json:"port"`
+	Username string `env:"TELEMETRY_USERNAME" envDefault:"username" json:"username"`
+	Password string `env:"TELEMETRY_PASSWORD" envDefault:"password" json:"password"`
 
 	MC  *mongo.Mongo
 	Log log.Logger
 
-	logOpt []log.OptFunc
+	logOpt []cmd.OptFunc
 }
 
 func WithJSONFormatter() OptFunc {
 	return func(li *Lib) (err error) {
-		li.logOpt = append(li.logOpt, log.JSONFormatter())
+		li.logOpt = append(li.logOpt, cmd.JSONFormatter())
 		return
 	}
 }
@@ -67,10 +68,10 @@ func (li *Lib) initCMD() (err error) {
 		Timeout: 5 * time.Second,
 	}
 
-	li.logOpt = append(li.logOpt, log.WithLogLevel(li.Level))
-	li.logOpt = append(li.logOpt, log.WithHook(mongoHook))
+	li.logOpt = append(li.logOpt, cmd.WithLogLevel(li.Level))
+	li.logOpt = append(li.logOpt, cmd.WithHook(mongoHook))
 
-	l, err := log.New(li.logOpt...)
+	l, err := cmd.New(li.logOpt...)
 
 	if err != nil {
 		return fmt.Errorf("fail to create log: %w", err)

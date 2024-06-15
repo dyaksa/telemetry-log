@@ -1,9 +1,10 @@
-package log
+package cmd
 
 import (
 	"errors"
 	"fmt"
-	"github.com/dyaksa/telemetry-log/telemetry/err"
+	"github.com/dyaksa/telemetry-log/err"
+	"github.com/dyaksa/telemetry-log/telemetry/log"
 	"path"
 	"runtime"
 	"strings"
@@ -69,11 +70,11 @@ func WithHook(hook logrus.Hook) OptFunc {
 type CMD struct {
 	lg       *logrus.Logger
 	lvl      Level
-	ctxFunc  []LogContextFunc
+	ctxFunc  []log.LogContextFunc
 	errTrace *err.ErrorTracer
 }
 
-func New(opts ...OptFunc) (l Logger, err error) {
+func New(opts ...OptFunc) (l log.Logger, err error) {
 	logr := logrus.New()
 	lg := &CMD{
 		lg:  logr,
@@ -90,7 +91,7 @@ func New(opts ...OptFunc) (l Logger, err error) {
 	return
 }
 
-func (l *CMD) logWithFields(fn ...LogContextFunc) (entry *logrus.Entry) {
+func (l *CMD) logWithFields(fn ...log.LogContextFunc) (entry *logrus.Entry) {
 	ctx := newLoggerContext(append(l.ctxFunc, fn...)...)
 	mergedFields := mergeFields(ctx.fields)
 	entry = l.lg.WithFields(mergedFields)
@@ -107,8 +108,8 @@ func mergeFields(fields []logrus.Fields) logrus.Fields {
 	return merged
 }
 
-func addTraceInfo() LogContextFunc {
-	return func(ctx LogContext) {
+func addTraceInfo() log.LogContextFunc {
+	return func(ctx log.LogContext) {
 		if pc, file, line, ok := runtime.Caller(4); ok {
 			function := runtime.FuncForPC(pc).Name()
 			ctx.Any("file", path.Base(file))
@@ -118,7 +119,7 @@ func addTraceInfo() LogContextFunc {
 	}
 }
 
-func (l CMD) Debug(message string, fn ...LogContextFunc) {
+func (l CMD) Debug(message string, fn ...log.LogContextFunc) {
 	if l.lvl > LevelDebug {
 		return
 	}
@@ -128,7 +129,7 @@ func (l CMD) Debug(message string, fn ...LogContextFunc) {
 	l.logWithFields(fn...).Debug(message)
 }
 
-func (l CMD) Info(message string, fn ...LogContextFunc) {
+func (l CMD) Info(message string, fn ...log.LogContextFunc) {
 	if l.lvl > LevelInfo {
 		return
 	}
@@ -138,7 +139,7 @@ func (l CMD) Info(message string, fn ...LogContextFunc) {
 	l.logWithFields(fn...).Info(message)
 }
 
-func (l CMD) Warn(message string, fn ...LogContextFunc) {
+func (l CMD) Warn(message string, fn ...log.LogContextFunc) {
 	if l.lvl > LevelWarn {
 		return
 	}
@@ -148,7 +149,7 @@ func (l CMD) Warn(message string, fn ...LogContextFunc) {
 	l.logWithFields(fn...).Warn(message)
 }
 
-func (l CMD) Error(message string, fn ...LogContextFunc) {
+func (l CMD) Error(message string, fn ...log.LogContextFunc) {
 	if l.lvl > LevelError {
 		return
 	}
@@ -158,7 +159,7 @@ func (l CMD) Error(message string, fn ...LogContextFunc) {
 	l.logWithFields(fn...).Error(message)
 }
 
-func (l CMD) Fatal(message string, fn ...LogContextFunc) {
+func (l CMD) Fatal(message string, fn ...log.LogContextFunc) {
 	if l.lvl > LevelFatal {
 		return
 	}
@@ -168,19 +169,19 @@ func (l CMD) Fatal(message string, fn ...LogContextFunc) {
 	l.logWithFields(fn...).Fatal(message)
 }
 
-func (l CMD) WithCtx(fn LogContextFunc) Logger {
+func (l CMD) WithCtx(fn log.LogContextFunc) log.Logger {
 	newLogger := l
 	newLogger.ctxFunc = append(newLogger.ctxFunc, fn)
 	return &newLogger
 }
 
-func (l CMD) WithTrace(err error) Logger {
+func (l CMD) WithTrace(err error) log.Logger {
 	newLogger := l
 	if err != nil {
 		err = l.errTrace.Err()
 		errors.As(err, &l.errTrace)
 	}
-	newLogger.ctxFunc = append(newLogger.ctxFunc, Any("trace", l.errTrace.Print()))
+	newLogger.ctxFunc = append(newLogger.ctxFunc, log.Any("trace", l.errTrace.Print()))
 	return &newLogger
 }
 
@@ -188,7 +189,7 @@ type loggerContext struct {
 	fields []logrus.Fields
 }
 
-func newLoggerContext(fn ...LogContextFunc) *loggerContext {
+func newLoggerContext(fn ...log.LogContextFunc) *loggerContext {
 	lc := &loggerContext{fields: make([]logrus.Fields, 0, len(fn))}
 	for _, fn := range fn {
 		fn(lc)
