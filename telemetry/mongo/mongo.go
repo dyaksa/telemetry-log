@@ -1,3 +1,6 @@
+// Package mongo provides a wrapper around the mongo-driver package,
+// simplifying the process of connecting to a MongoDB instance and
+// performing operations on it.
 package mongo
 
 import (
@@ -9,8 +12,10 @@ import (
 	"strings"
 )
 
+// OptFunc is a type that defines a function that modifies a Mongo instance.
 type OptFunc func(*Mongo) error
 
+// Mongo is a struct that holds the necessary information to connect to a MongoDB instance.
 type Mongo struct {
 	client *mongo.Client
 
@@ -20,6 +25,7 @@ type Mongo struct {
 	password string
 }
 
+// WithConnection is a function that returns an OptFunc which sets the connection details of a Mongo instance.
 func WithConnection(host, port, username, password string) OptFunc {
 	return func(m *Mongo) (err error) {
 		m.host = host
@@ -30,6 +36,9 @@ func WithConnection(host, port, username, password string) OptFunc {
 	}
 }
 
+// New is a function that creates a new Mongo instance and connects to the MongoDB server.
+// It applies the provided options to the Mongo instance and then attempts to connect to the server.
+// If the connection is successful, it pings the server to ensure the connection is alive.
 func New(opts ...OptFunc) (*Mongo, error) {
 	m := &Mongo{}
 	for _, opt := range opts {
@@ -69,11 +78,13 @@ func New(opts ...OptFunc) (*Mongo, error) {
 	return m, err
 }
 
+// Close is a method that disconnects the Mongo instance from the MongoDB server.
 func (m *Mongo) Close(ctx context.Context) (err error) {
 	err = m.client.Disconnect(ctx)
 	return
 }
 
+// Collection is a method that returns a mongo.Collection instance for the specified collection name in the "telemetry" database.
 func (m *Mongo) Collection(name string) *mongo.Collection {
 	return m.client.Database("telemetry").Collection(name)
 }
