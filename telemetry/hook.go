@@ -30,6 +30,12 @@ func (m *MongoHook) Fire(e *logrus.Entry) error {
 		}
 		break
 	default:
+		_, err := m.Client.Collection("application_log").InsertOne(context.TODO(), bson.D{
+			{"sample", "sample"},
+		})
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 	return nil
