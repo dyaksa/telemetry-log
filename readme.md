@@ -1,6 +1,6 @@
 # Log Telemetry
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/caarlos0/env/build.yml?branch=main&style=for-the-badge)](https://github.com/dyaksa/telemetry-log/actions?workflow=build)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/caarlos0/env/build.yml?branch=main&style=for-the-badge)](https://github.com/dyaksa/telemetry-log/actions)
 [![Coverage Status](https://img.shields.io/codecov/c/gh/caarlos0/env.svg?logo=codecov&style=for-the-badge)](https://codecov.io/gh/caarlos0/env)
 
 A simple dependency for trace log and store trace to `mongo db`
