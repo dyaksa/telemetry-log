@@ -10,6 +10,8 @@
 
 .env
 
+main.go
+
 .idea
 
 # Test binary, built with `go test -c`

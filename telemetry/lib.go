@@ -17,11 +17,13 @@ type Lib struct {
 	Port     string `env:"TELEMETRY_PORT" envDefault:"27017" json:"port"`
 	Username string `env:"TELEMETRY_USERNAME" envDefault:"username" json:"username"`
 	Password string `env:"TELEMETRY_PASSWORD" envDefault:"password" json:"password"`
+	withHook bool
 
-	MC  *mongo.Mongo
+	mc  *mongo.Mongo
 	Log log.Logger
 
-	logOpt []cmd.OptFunc
+	logOpt    []cmd.OptFunc
+	mongoOpts []mongo.OptFunc
 }
 
 func WithJSONFormatter() OptFunc {
@@ -31,15 +33,22 @@ func WithJSONFormatter() OptFunc {
 	}
 }
 
+func WithHook() OptFunc {
+	return func(li *Lib) (err error) {
+		li.withHook = true
+		return
+	}
+}
+
 func New(opts ...OptFunc) (li *Lib, err error) {
-	li = &Lib{}
+	li = &Lib{withHook: false}
 
 	if err = LoadEnv(li); err != nil {
 		return nil, fmt.Errorf("fail to load env: %w", err)
 	}
 
 	for _, opt := range opts {
-		if err := opt(li); err != nil {
+		if err = opt(li); err != nil {
 			return nil, fmt.Errorf("fail to apply options: %w", err)
 		}
 	}
@@ -64,27 +73,26 @@ func (li *Lib) initEnv() (err error) {
 
 func (li *Lib) initCMD() (err error) {
 	mongoHook := &MongoHook{
-		Client:  li.MC,
-		Timeout: 5 * time.Second,
+		Client:   li.mc,
+		Timeout:  5 * time.Second,
+		WithHook: li.withHook,
 	}
 
 	li.logOpt = append(li.logOpt, cmd.WithLogLevel(li.Level))
 	li.logOpt = append(li.logOpt, cmd.WithHook(mongoHook))
 
-	l, err := cmd.New(li.logOpt...)
+	li.Log, err = cmd.New(li.logOpt...)
 
 	if err != nil {
 		return fmt.Errorf("fail to create log: %w", err)
 	}
 
-	li.Log = l
 	return
 }
 
 func (li *Lib) initConnection() (err error) {
-	opts := []mongo.OptFunc{}
-	opts = append(opts, mongo.WithConnection(li.Host, li.Port, li.Username, li.Password))
-	li.MC, err = mongo.New(opts...)
+	li.mongoOpts = append(li.mongoOpts, mongo.WithConnection(li.Host, li.Port, li.Username, li.Password))
+	li.mc, err = mongo.New(li.mongoOpts...)
 
 	if err != nil {
 		return fmt.Errorf("fail to create mongo connection: %w", err)

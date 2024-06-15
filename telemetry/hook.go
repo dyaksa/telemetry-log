@@ -10,13 +10,14 @@ import (
 )
 
 type MongoHook struct {
-	Client  *mongo.Mongo
-	Timeout time.Duration
+	Client   *mongo.Mongo
+	Timeout  time.Duration
+	WithHook bool
 }
 
 func (m *MongoHook) Fire(e *logrus.Entry) error {
-	switch e.Level.String() {
-	case logrus.ErrorLevel.String():
+	switch {
+	case e.Level.String() == logrus.ErrorLevel.String() && m.WithHook:
 		_, err := m.Client.Collection("application_trace").InsertOne(context.TODO(), bson.D{
 			{"level", e.Level.String()},
 			{"trace_date", e.Time},
