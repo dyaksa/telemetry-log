@@ -12,7 +12,10 @@ type Logger interface {
 	Fatal(message string, fn ...LogContextFunc) // Fatal logs a fatal error message.
 
 	WithCtx(LogContextFunc) Logger // WithCtx returns a new Logger with the specified context.
-	WithTrace(err error) Logger    // WithTrace returns a new Logger with the specified error trace.
+
+	WithTrace(err error) Logger // WithTrace returns a new Logger with the specified error trace.
+
+	WithFields(fields map[string]interface{}) Logger
 }
 
 // LogContextFunc is a function that modifies a LogContext.

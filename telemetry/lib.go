@@ -9,21 +9,23 @@ import (
 	"time"
 )
 
+type Fields map[string]interface{}
+
 // OptFunc is a type that defines a function that modifies a Lib instance.
 type OptFunc func(*Lib) error
 
 // Lib is a struct that holds the necessary information for telemetry logging.
 type Lib struct {
-	Level string `env:"TELEMETRY_LOG_LEVEL" envDefault:"debug" json:"level"`
-
+	Level    string `env:"TELEMETRY_LOG_LEVEL" envDefault:"debug" json:"level"`
 	Host     string `env:"TELEMETRY_HOST" envDefault:"127.0.0.1" json:"host"`
 	Port     string `env:"TELEMETRY_PORT" envDefault:"27017" json:"port"`
 	Username string `env:"TELEMETRY_USERNAME" envDefault:"username" json:"username"`
 	Password string `env:"TELEMETRY_PASSWORD" envDefault:"password" json:"password"`
-	withHook bool
 
-	mc  *mongo.Mongo
 	Log log.Logger
+
+	withHook bool
+	mc       *mongo.Mongo
 
 	logOpt    []cmd.OptFunc
 	mongoOpts []mongo.OptFunc
@@ -38,9 +40,9 @@ func WithJSONFormatter() OptFunc {
 }
 
 // WithHook is a function that returns an OptFunc which sets the hook for a Lib instance.
-func WithHook() OptFunc {
+func WithHook(status bool) OptFunc {
 	return func(li *Lib) (err error) {
-		li.withHook = true
+		li.withHook = status
 		return
 	}
 }

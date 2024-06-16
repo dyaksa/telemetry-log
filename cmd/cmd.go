@@ -61,16 +61,16 @@ func WithLevel(l Level) OptFunc {
 
 // JSONFormatter is a function that returns an OptFunc which sets the JSON formatter for a CMD instance.
 func JSONFormatter() OptFunc {
-	return func(z *CMD) (err error) {
-		z.lg.SetFormatter(&logrus.JSONFormatter{})
+	return func(l *CMD) (err error) {
+		l.lg.SetFormatter(&logrus.JSONFormatter{})
 		return
 	}
 }
 
 // WithHook is a function that returns an OptFunc which sets the hook for a CMD instance.
 func WithHook(hook logrus.Hook) OptFunc {
-	return func(z *CMD) (err error) {
-		z.lg.AddHook(hook)
+	return func(l *CMD) (err error) {
+		l.lg.AddHook(hook)
 		return
 	}
 }
@@ -203,6 +203,14 @@ func (l CMD) WithTrace(err error) log.Logger {
 		errors.As(err, &l.errTrace)
 	}
 	newLogger.ctxFunc = append(newLogger.ctxFunc, log.Any("trace", l.errTrace.Print()))
+	return &newLogger
+}
+
+func (l CMD) WithFields(fields map[string]interface{}) log.Logger {
+	newLogger := l
+	for key, field := range fields {
+		newLogger.ctxFunc = append(newLogger.ctxFunc, log.Any(key, field))
+	}
 	return &newLogger
 }
 
