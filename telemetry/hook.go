@@ -36,7 +36,9 @@ func (m *MongoHook) Fire(e *logrus.Entry) error {
 		break
 	default:
 		_, err := m.Client.Collection("application_log").InsertOne(context.TODO(), bson.D{
-			{"sample", "sample"},
+			{"trace_date", e.Time},
+			{"func", e.Data["func"]},
+			{"file", fmt.Sprintf("%s:%d", e.Data["file"], e.Data["line"])},
 		})
 		if err != nil {
 			return err
