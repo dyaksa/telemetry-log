@@ -3,10 +3,11 @@ package telemetry
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/dyaksa/telemetry-log/cmd"
 	"github.com/dyaksa/telemetry-log/telemetry/log"
 	"github.com/dyaksa/telemetry-log/telemetry/mongo"
-	"time"
 )
 
 type Fields map[string]interface{}
@@ -50,7 +51,7 @@ func WithHook(status bool) OptFunc {
 // New is a function that creates a new Lib instance.
 // It applies the provided options to the Lib instance and then attempts to initialize the environment and command.
 func New(opts ...OptFunc) (li *Lib, err error) {
-	li = &Lib{withHook: false}
+	li = &Lib{withHook: true}
 
 	if err = LoadEnv(li); err != nil {
 		return nil, fmt.Errorf("fail to load env: %w", err)
@@ -71,14 +72,6 @@ func New(opts ...OptFunc) (li *Lib, err error) {
 	}
 
 	return li, nil
-}
-
-// initEnv is a method that loads the environment variables for a Lib instance.
-func (li *Lib) initEnv() (err error) {
-	if err = LoadEnv(li); err != nil {
-		return fmt.Errorf("fail to load env: %w", err)
-	}
-	return
 }
 
 // initCMD is a method that initializes the command for a Lib instance.

@@ -4,10 +4,11 @@ package telemetry
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/dyaksa/telemetry-log/telemetry/mongo"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
-	"time"
 )
 
 // MongoHook is a struct that holds the necessary information for a MongoDB hook.
@@ -33,7 +34,6 @@ func (m *MongoHook) Fire(e *logrus.Entry) error {
 		if err != nil {
 			return err
 		}
-		break
 	default:
 		_, err := m.Client.Collection("application_log").InsertOne(context.TODO(), bson.D{
 			{"trace_date", e.Time},
